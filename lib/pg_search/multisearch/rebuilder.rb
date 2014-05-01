@@ -28,20 +28,27 @@ module PgSearch
         model.connection
       end
 
-      REBUILD_SQL_TEMPLATE = <<-SQL.strip_heredoc
-        INSERT INTO :documents_table (searchable_type, searchable_id, content, created_at, updated_at)
-          SELECT :model_name AS searchable_type,
-                 :model_table.id AS searchable_id,
-                 (
-                   :content_expressions
-                 ) AS content,
-                 :current_time AS created_at,
-                 :current_time AS updated_at
-          FROM :model_table
-      SQL
+      def primary_key
+        "id"
+      end
+
+      def rebuild_sql_template
+         <<-SQL.strip_heredoc
+          INSERT INTO :documents_table (searchable_type, searchable_id, content, created_at, updated_at)
+            SELECT :model_name AS searchable_type,
+                   :model_table.#{primary_key} AS searchable_id,
+                   (
+                     :content_expressions
+                   ) AS content,
+                   :current_time AS created_at,
+                   :current_time AS updated_at
+            FROM :model_table
+        SQL
+      end
 
       def rebuild_sql
-        replacements.inject(REBUILD_SQL_TEMPLATE) do |sql, key|
+        p rebuild_sql_template
+        replacements.inject(rebuild_sql_template) do |sql, key|
           sql.gsub ":#{key}", send(key)
         end
       end
