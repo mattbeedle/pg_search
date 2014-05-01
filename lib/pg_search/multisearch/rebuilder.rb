@@ -29,11 +29,11 @@ module PgSearch
       end
 
       def primary_key
-        "id"
+        model.primary_key
       end
 
       def rebuild_sql_template
-         <<-SQL.strip_heredoc
+         @template ||= <<-SQL.strip_heredoc
           INSERT INTO :documents_table (searchable_type, searchable_id, content, created_at, updated_at)
             SELECT :model_name AS searchable_type,
                    :model_table.#{primary_key} AS searchable_id,
@@ -47,7 +47,6 @@ module PgSearch
       end
 
       def rebuild_sql
-        p rebuild_sql_template
         replacements.inject(rebuild_sql_template) do |sql, key|
           sql.gsub ":#{key}", send(key)
         end
